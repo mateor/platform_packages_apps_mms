@@ -48,7 +48,7 @@ import com.android.mms.MmsConfig;
 
 
 //-------------------------------------------------
-import com.android.internal.telephony.Phone;
+import com.android.internal.telephony.PhoneConstants;
 import android.net.Uri;
 import android.database.Cursor;
 import android.os.ServiceManager;
@@ -105,7 +105,7 @@ public class HttpUtils {
 	         if (apnCursor.moveToFirst()) {
     	         do{
     	             final String type = apnCursor.getString(apnCursor.getColumnIndex(Telephony.Carriers.TYPE));
-    	             if (!TextUtils.isEmpty(type) && ( type.equalsIgnoreCase(Phone.APN_TYPE_ALL) || type.equalsIgnoreCase(Phone.APN_TYPE_MMS))) {
+    	             if (!TextUtils.isEmpty(type) && ( type.equalsIgnoreCase(PhoneConstants.APN_TYPE_ALL) || type.equalsIgnoreCase(PhoneConstants.APN_TYPE_MMS))) {
     	                 final String mmsc = apnCursor.getString(apnCursor.getColumnIndex(Telephony.Carriers.MMSC));
     	                 final String mmsProxy = apnCursor.getString(apnCursor.getColumnIndex(Telephony.Carriers.MMSPROXY));
     	                 final String port = apnCursor.getString(apnCursor.getColumnIndex(Telephony.Carriers.MMSPORT));                  
