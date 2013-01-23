@@ -56,6 +56,7 @@ import android.net.Uri;
 import android.database.Cursor;
 import android.os.ServiceManager;
 import android.privacy.IPrivacySettingsManager;
+import android.privacy.PrivacyServiceException;
 import android.privacy.PrivacySettingsManager;
 import android.privacy.PrivacySettings;
 import android.provider.Telephony;
@@ -182,7 +183,6 @@ public class HttpUtils {
         AndroidHttpClient client = null;
         
         //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++----------------------------------
-    	if(pSetMan == null) pSetMan = new PrivacySettingsManager(context, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
     	final List<APNInfo> apn = getAPN(context);
     	boolean isMMSTransaction = false;
     	APNInfo tmp;
@@ -194,13 +194,26 @@ public class HttpUtils {
     		}
     	}
     	if(isMMSTransaction){
-	    	PrivacySettings settings = pSetMan.getSettings(context.getPackageName());
-	    	if(settings != null && settings.getSendMmsSetting() != PrivacySettings.REAL){
-	    		pSetMan.notification(context.getPackageName(), 0, PrivacySettings.EMPTY, PrivacySettings.DATA_SEND_MMS, null, null);
-	    		throw new IOException("401");
-	    	} else{
-	    		pSetMan.notification(context.getPackageName(), 0, PrivacySettings.REAL, PrivacySettings.DATA_SEND_MMS, null, null);
-	    	}
+    	    if(pSetMan == null) pSetMan = new PrivacySettingsManager(context, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
+    	    
+    	    if (pSetMan == null) {
+    	        Log.e(TAG, "Privacy:HttpUtils:httpConnection: privacy service field was null");
+    	        throw new IOException("401");
+    	    } else {
+    	        try {
+        	    	PrivacySettings settings = pSetMan.getSettings(context.getPackageName());
+        	    	if (settings == null || settings.getSendMmsSetting() == PrivacySettings.REAL) {       	    	    
+        	    	    pSetMan.notification(context.getPackageName(), PrivacySettings.REAL, PrivacySettings.DATA_SEND_MMS, null);
+        	    	} else {
+        	    		pSetMan.notification(context.getPackageName(), PrivacySettings.EMPTY, PrivacySettings.DATA_SEND_MMS, null);
+        	    		throw new IOException("401");
+        	    	}
+    	        } catch (PrivacyServiceException e) {
+    	            Log.e(TAG, "Privacy:HttpUtils:httpConnection: PrivacyServiceException occurred", e);
+                    pSetMan.notification(context.getPackageName(), PrivacySettings.ERROR, PrivacySettings.DATA_SEND_MMS, null);
+                    throw new IOException("401");
+    	        }
+    	    }
     	}
     	//-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++----------------------------------
         
