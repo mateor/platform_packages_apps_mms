@@ -55,10 +55,12 @@ import android.os.ServiceManager;
 import android.privacy.IPrivacySettingsManager;
 import android.privacy.PrivacySettingsManager;
 import android.privacy.PrivacySettings;
+import android.privacy.utilities.PrivacyDebugger;
 import android.provider.Telephony;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import com.android.internal.telephony.PhoneConstants;
 //-------------------------------------------------
 
 
@@ -105,7 +107,7 @@ public class HttpUtils {
 	         if (apnCursor.moveToFirst()) {
     	         do{
     	             final String type = apnCursor.getString(apnCursor.getColumnIndex(Telephony.Carriers.TYPE));
-    	             if (!TextUtils.isEmpty(type) && ( type.equalsIgnoreCase(Phone.APN_TYPE_ALL) || type.equalsIgnoreCase(Phone.APN_TYPE_MMS))) {
+    	             if (!TextUtils.isEmpty(type) && ( type.equalsIgnoreCase(PhoneConstants.APN_TYPE_ALL) || type.equalsIgnoreCase(PhoneConstants.APN_TYPE_MMS))) {
     	                 final String mmsc = apnCursor.getString(apnCursor.getColumnIndex(Telephony.Carriers.MMSC));
     	                 final String mmsProxy = apnCursor.getString(apnCursor.getColumnIndex(Telephony.Carriers.MMSPROXY));
     	                 final String port = apnCursor.getString(apnCursor.getColumnIndex(Telephony.Carriers.MMSPORT));                  
@@ -118,6 +120,7 @@ public class HttpUtils {
     	         } while (apnCursor.moveToNext()); 
 	         }              
 	         apnCursor.close();
+	         PrivacyDebugger.i(TAG,"getApn - number of results: " + results.size());
 	         return results;
 	     }
     }
@@ -187,16 +190,25 @@ public class HttpUtils {
     		tmp = apn.get(i);
     		if(tmp.MMSProxy.equals(proxyHost) || tmp.MMSPort.equals(String.valueOf(proxyPort)) || tmp.MMSCenterUrl.equals(url)){
     			isMMSTransaction = true;
+    			PrivacyDebugger.i(TAG,"httpConnection - found mms transaction");
     			break;
     		}
     	}
     	if(isMMSTransaction){
 	    	PrivacySettings settings = pSetMan.getSettings(context.getPackageName());
-	    	if(settings != null && settings.getSendMmsSetting() != PrivacySettings.REAL){
-	    		pSetMan.notification(context.getPackageName(), 0, PrivacySettings.EMPTY, PrivacySettings.DATA_SEND_MMS, null, null);
+	    	if(settings != null && settings.getSendMmsSetting() != PrivacySettings.REAL) {
+	    		if(settings.isDefaultDenyObject())
+	    			pSetMan.notification(context.getPackageName(), 0, PrivacySettings.ERROR, PrivacySettings.DATA_SEND_MMS, null, null);
+	    		else
+	    			pSetMan.notification(context.getPackageName(), 0, PrivacySettings.EMPTY, PrivacySettings.DATA_SEND_MMS, null, null);
+	    		PrivacyDebugger.i(TAG,"httpConnection - going to block outgoing mms");
 	    		throw new IOException("401");
-	    	} else{
-	    		pSetMan.notification(context.getPackageName(), 0, PrivacySettings.REAL, PrivacySettings.DATA_SEND_MMS, null, null);
+	    	} else {
+	    		if(settings != null && settings.isDefaultDenyObject())
+	    			pSetMan.notification(context.getPackageName(), 0, PrivacySettings.ERROR, PrivacySettings.DATA_SEND_MMS, null, null);
+	    		else
+	    			pSetMan.notification(context.getPackageName(), 0, PrivacySettings.REAL, PrivacySettings.DATA_SEND_MMS, null, null);
+	    		PrivacyDebugger.i(TAG,"httpConnection - going to allow outgoing mms");
 	    	}
     	}
     	//-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++----------------------------------
