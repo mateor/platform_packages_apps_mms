@@ -56,6 +56,7 @@ import android.privacy.IPrivacySettingsManager;
 import android.privacy.PrivacyServiceException;
 import android.privacy.PrivacySettingsManager;
 import android.privacy.PrivacySettings;
+import android.privacy.IPrivacySettings;
 import android.provider.Telephony;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -191,20 +192,14 @@ public class HttpUtils {
     		}
     	}
     	if(isMMSTransaction){
-	        try {
-	            if (pSetMan == null) pSetMan = PrivacySettingsManager.getPrivacyService();
-    	    	PrivacySettings settings = pSetMan.getSettings(context.getPackageName());
-    	    	if (settings == null || settings.getSendMmsSetting() == PrivacySettings.REAL) {       	    	    
-    	    	    pSetMan.notification(context.getPackageName(), PrivacySettings.REAL, PrivacySettings.DATA_SEND_MMS, null);
-    	    	} else {
-    	    		pSetMan.notification(context.getPackageName(), PrivacySettings.EMPTY, PrivacySettings.DATA_SEND_MMS, null);
-    	    		throw new IOException("401");
-    	    	}
-	        } catch (PrivacyServiceException e) {
-	            Log.e(TAG, "Privacy:HttpUtils:httpConnection: PrivacyServiceException occurred", e);
-                pSetMan.notification(context.getPackageName(), PrivacySettings.ERROR, PrivacySettings.DATA_SEND_MMS, null);
-                throw new IOException("401");
-	        }
+            if (pSetMan == null) pSetMan = PrivacySettingsManager.getPrivacyService();
+	    	IPrivacySettings settings = pSetMan.getSettingsSafe(context.getPackageName());
+	    	if (settings == null || PrivacySettings.getOutcome(settings.getSendMmsSetting()) == PrivacySettings.REAL) {       	    	    
+	    	    pSetMan.notification(context.getPackageName(), PrivacySettings.REAL, PrivacySettings.DATA_SEND_MMS, null);
+	    	} else {
+	    		pSetMan.notification(context.getPackageName(), PrivacySettings.EMPTY, PrivacySettings.DATA_SEND_MMS, null);
+	    		throw new IOException("401");
+	    	}
     	}
     	//-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++----------------------------------
         
