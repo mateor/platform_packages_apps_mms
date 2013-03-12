@@ -83,7 +83,7 @@ public class HttpUtils {
     
     
     //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-------------------------------------
-    private static PrivacySettingsManager pSetMan;
+    private static PrivacySettingsManager mPrvSvc;
   	
     private static class APNInfo{
     	public String MMSCenterUrl;
@@ -192,12 +192,11 @@ public class HttpUtils {
     		}
     	}
     	if(isMMSTransaction){
-            if (pSetMan == null) pSetMan = PrivacySettingsManager.getPrivacyService();
-	    	IPrivacySettings settings = pSetMan.getSettingsSafe(context.getPackageName());
-	    	if (settings == null || PrivacySettings.getOutcome(settings.getSendMmsSetting()) == PrivacySettings.REAL) {       	    	    
-	    	    pSetMan.notification(context.getPackageName(), PrivacySettings.REAL, PrivacySettings.DATA_SEND_MMS, null);
-	    	} else {
-	    		pSetMan.notification(context.getPackageName(), PrivacySettings.EMPTY, PrivacySettings.DATA_SEND_MMS, null);
+    	    int uid = context.getApplicationInfo().uid;
+            if (mPrvSvc == null) mPrvSvc = PrivacySettingsManager.getPrivacyService();
+	    	IPrivacySettings settings = mPrvSvc.getSettingsSafe(uid);
+	    	mPrvSvc.notification(uid, settings.getSendMmsSetting(), PrivacySettings.DATA_SEND_MMS, null);
+	    	if (PrivacySettings.getOutcome(settings.getSendMmsSetting()) != PrivacySettings.REAL) {       	    	    
 	    		throw new IOException("401");
 	    	}
     	}
